@@ -28,6 +28,7 @@ const Singup: FC<TSignupProps> = (props) => {
         return navigate("/signin");
       }, 1500);
     } else {
+      // доделать ошибку и успех после реги
     }
   };
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
