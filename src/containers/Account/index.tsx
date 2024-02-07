@@ -1,4 +1,4 @@
-import { type ChangeEvent, useState, type FC } from "react";
+import { type ChangeEvent, useState, type FC, useEffect } from "react";
 import { Typography } from "@mui/material";
 import { TextField } from "@mui/material";
 import { Container } from "@mui/material";
@@ -10,17 +10,27 @@ import { TableContainer } from "@mui/material/";
 import { TableHead } from "@mui/material/";
 import { TableRow } from "@mui/material/";
 import { Paper } from "@mui/material/";
+import { InputLabel } from "@mui/material/";
+import { MenuItem } from "@mui/material/";
+import { FormControl } from "@mui/material/";
+import { Select, SelectChangeEvent } from "@mui/material/";
 
-import type { TAccountProps, TRows } from "./types";
+import type { TAccountProps, TRows, TSort } from "./types";
 
 const Account: FC<TAccountProps> = (props) => {
+  const prefixLink: string = "https://front-test.hex.team/s/";
+  const [linkPerPage, setLinkPerPage] = useState<number>(5);
+  const [sort, setSort] = useState<TSort>("desc_counter");
   const [fullLink, setFullLink] = useState<string>("");
+
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
     setFullLink(event.target.value);
   };
+  const handleSelect = (event: SelectChangeEvent) => {
+    setSort(event.target.value as TSort);
+  };
   const sendLink = async () => {
-    console.log(fullLink);
-    console.log(props.token);
+    if (fullLink === "") return 0;
     const res = await fetch(
       `https://front-test.hex.team/api/squeeze?link=${fullLink}`,
       {
@@ -32,20 +42,42 @@ const Account: FC<TAccountProps> = (props) => {
         },
       }
     );
-    if (res.ok) console.log(await res.json());
-    else console.log(await res.json());
+    if (res.ok) {
+      console.log(await res.json());
+      getLinks();
+    } else {
+      console.log(await res.json());
+      alert("Ошибка");
+    }
   };
+
   const createData = (shortLink: string, fullLink: string, counter: number) => {
     return { shortLink, fullLink, counter };
   };
-  const [rows, setRows] = useState<TRows>([
-    createData("Frozen yoghurt", "159", 6.0),
-    createData("Ice cream sandwich", "237", 9.0),
-    createData("Eclair", "262", 16.0),
-    createData("Cupcake", "305", 3.7),
-    createData("Gingerbread", "356", 16.0),
-  ]);
-
+  const [rows, setRows] = useState<TRows>([]);
+  const getLinks = async () => {
+    const res = await fetch(
+      `https://front-test.hex.team/api/statistics?order=${sort}&offset=0&limit=2`,
+      {
+        headers: {
+          accept: "application/json",
+          Authorization: `Bearer ${props.token}`,
+        },
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      // console.log(res.headers.get(`x-total-count`));
+      setRows(
+        data.map((row: any) => {
+          return createData(prefixLink + row.short, row.target, row.counter);
+        })
+      );
+    } else alert("Данные не загружены");
+  };
+  useEffect(() => {
+    getLinks();
+  }, [setRows, sort]);
   return (
     <>
       <Container
@@ -70,7 +102,29 @@ const Account: FC<TAccountProps> = (props) => {
         <Typography variant="h5" color="initial" m={2}>
           Ваши ссылки
         </Typography>
+
+        {/* Выбор сортировки */}
+
+        <Typography variant="h5" color="initial">
+          Выбор сортировки
+        </Typography>
+        <FormControl sx={{ maxWidth: "300px", margin: "16px auto" }}>
+          <InputLabel>Сортировка</InputLabel>
+          <Select value={sort} label="Сортировка" onChange={handleSelect}>
+            <MenuItem value={"asc_short"}>По короткой ссылке (A-Z)</MenuItem>
+            <MenuItem value={"desc_short"}>По короткой ссылке (Z-A)</MenuItem>
+            <MenuItem value={"asc_target"}>По длинной ссылке (A-Z)</MenuItem>
+            <MenuItem value={"desc_target"}>По длинной ссылке (Z-A)</MenuItem>
+            <MenuItem value={"desc_counter"}>
+              По кол-ву переходов (2..1..0)
+            </MenuItem>
+            <MenuItem value={"asc_counter"}>
+              По кол-ву переходов (0..1..2)
+            </MenuItem>
+          </Select>
+        </FormControl>
       </Container>
+
       {/* Таблица */}
       <TableContainer
         sx={{ maxWidth: "1280px", margin: "0 auto" }}
@@ -90,15 +144,25 @@ const Account: FC<TAccountProps> = (props) => {
             {rows.map((row) => (
               <TableRow key={row.shortLink}>
                 <TableCell component="th" scope="row">
-                  {row.shortLink}
+                  <a rel="noreferrer" target="_blank" href={row.shortLink}>
+                    {row.shortLink}
+                  </a>
                 </TableCell>
-                <TableCell align="right">{row.fullLink}</TableCell>
+                <TableCell align="right">
+                  <a rel="noreferrer" target="_blank" href={row.fullLink}>
+                    {row.fullLink}
+                  </a>
+                </TableCell>
                 <TableCell align="right">{row.counter}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+      <Typography m={2} variant="h6" color="initial">
+        Сколько отображать на странице:
+      </Typography>
+      <TextField label="Кол-во строк" defaultValue={linkPerPage} />
     </>
   );
 };

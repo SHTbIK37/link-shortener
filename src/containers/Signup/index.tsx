@@ -21,7 +21,6 @@ const Singup: FC<TSignupProps> = (props) => {
       setSuccess("Введите пароль");
       return 0;
     }
-    console.log(props.userData);
     const res = await fetch(
       `https://front-test.hex.team/api/register?username=${props.userData.username}&password=${props.userData.password}`,
       {

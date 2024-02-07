@@ -12,7 +12,6 @@ const Singin: FC<TSigninProps> = (props) => {
   const navigate = useNavigate();
   // запрос токена
   const sendData = async () => {
-    console.log(props.userData);
     const res = await fetch("https://front-test.hex.team/api/login", {
       method: "POST",
       headers: {
@@ -28,7 +27,6 @@ const Singin: FC<TSigninProps> = (props) => {
     if (res.ok) {
       const token = await res.json();
       props.setToken(token.access_token);
-      console.log(token.access_token);
       return navigate("/");
     } else {
       props.setToken("error");
