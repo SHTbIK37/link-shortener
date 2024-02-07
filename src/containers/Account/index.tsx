@@ -1,25 +1,28 @@
-import { type ChangeEvent, useState, type FC, useEffect } from "react";
+import { type ChangeEvent, useState, type FC, useEffect, useRef } from "react";
 import { Typography } from "@mui/material";
 import { TextField } from "@mui/material";
 import { Container } from "@mui/material";
 import { Button } from "@mui/material";
-import { Table } from "@mui/material/";
-import { TableBody } from "@mui/material/";
-import { TableCell } from "@mui/material/";
-import { TableContainer } from "@mui/material/";
-import { TableHead } from "@mui/material/";
-import { TableRow } from "@mui/material/";
-import { Paper } from "@mui/material/";
 import { InputLabel } from "@mui/material/";
 import { MenuItem } from "@mui/material/";
 import { FormControl } from "@mui/material/";
+import { Box } from "@mui/material/";
 import { Select, SelectChangeEvent } from "@mui/material/";
 
-import type { TAccountProps, TRows, TSort } from "./types";
+import type {
+  TAccountProps,
+  TResponseLink,
+  TResponseLinks,
+  TRows,
+  TSort,
+} from "./types";
+import { LinksTable } from "../../components/LinksTable";
 
 const Account: FC<TAccountProps> = (props) => {
   const prefixLink: string = "https://front-test.hex.team/s/";
+  const allLinks = useRef<number>(0);
   const [linkPerPage, setLinkPerPage] = useState<number>(5);
+  const [page, setPage] = useState<number>(0);
   const [sort, setSort] = useState<TSort>("desc_counter");
   const [fullLink, setFullLink] = useState<string>("");
 
@@ -30,7 +33,7 @@ const Account: FC<TAccountProps> = (props) => {
     setSort(event.target.value as TSort);
   };
   const sendLink = async () => {
-    if (fullLink === "") return 0;
+    if (fullLink === "") return null;
     const res = await fetch(
       `https://front-test.hex.team/api/squeeze?link=${fullLink}`,
       {
@@ -43,11 +46,10 @@ const Account: FC<TAccountProps> = (props) => {
       }
     );
     if (res.ok) {
-      console.log(await res.json());
       getLinks();
     } else {
-      console.log(await res.json());
-      alert("Ошибка");
+      let error = await res.json();
+      alert(`Ошибка со стороны сервера: ${error.details}`);
     }
   };
 
@@ -57,7 +59,9 @@ const Account: FC<TAccountProps> = (props) => {
   const [rows, setRows] = useState<TRows>([]);
   const getLinks = async () => {
     const res = await fetch(
-      `https://front-test.hex.team/api/statistics?order=${sort}&offset=0&limit=2`,
+      `https://front-test.hex.team/api/statistics?order=${sort}&offset=${
+        linkPerPage * page
+      }&limit=${linkPerPage}`,
       {
         headers: {
           accept: "application/json",
@@ -66,18 +70,27 @@ const Account: FC<TAccountProps> = (props) => {
       }
     );
     if (res.ok) {
-      const data = await res.json();
-      // console.log(res.headers.get(`x-total-count`));
+      const data: TResponseLinks = await res.json();
+      if (data.length === 0) return [];
+      allLinks.current = Number(res.headers.get(`x-total-count`));
       setRows(
-        data.map((row: any) => {
+        data.map((row: TResponseLink) => {
           return createData(prefixLink + row.short, row.target, row.counter);
         })
       );
-    } else alert("Данные не загружены");
+    } else alert("Данные не загружены или истек срок токена");
   };
   useEffect(() => {
     getLinks();
-  }, [setRows, sort]);
+  }, [setRows, sort, linkPerPage, page]);
+  const handleSetLinkPerPage = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.value) setLinkPerPage(Number(event.target.value));
+  };
+  const handleChangePage = (move: number) => {
+    if (move === 1)
+      if ((page + 1) * linkPerPage >= allLinks.current) return null;
+    if (page + move !== -1) setPage(page + move);
+  };
   return (
     <>
       <Container
@@ -91,6 +104,7 @@ const Account: FC<TAccountProps> = (props) => {
           Введите ссылку для сокращения
         </Typography>
         <TextField
+          name="link"
           onChange={handleChange}
           sx={{ m: "8px 0" }}
           label="Ссылка"
@@ -99,9 +113,6 @@ const Account: FC<TAccountProps> = (props) => {
         <Button onClick={sendLink} sx={{ m: "8px 0" }} variant="contained">
           Сократить
         </Button>
-        <Typography variant="h5" color="initial" m={2}>
-          Ваши ссылки
-        </Typography>
 
         {/* Выбор сортировки */}
 
@@ -110,7 +121,12 @@ const Account: FC<TAccountProps> = (props) => {
         </Typography>
         <FormControl sx={{ maxWidth: "300px", margin: "16px auto" }}>
           <InputLabel>Сортировка</InputLabel>
-          <Select value={sort} label="Сортировка" onChange={handleSelect}>
+          <Select
+            name="sorting"
+            value={sort}
+            label="Сортировка"
+            onChange={handleSelect}
+          >
             <MenuItem value={"asc_short"}>По короткой ссылке (A-Z)</MenuItem>
             <MenuItem value={"desc_short"}>По короткой ссылке (Z-A)</MenuItem>
             <MenuItem value={"asc_target"}>По длинной ссылке (A-Z)</MenuItem>
@@ -123,46 +139,47 @@ const Account: FC<TAccountProps> = (props) => {
             </MenuItem>
           </Select>
         </FormControl>
+        <Typography variant="h5" color="initial" m={2}>
+          Ваши ссылки
+        </Typography>
       </Container>
 
       {/* Таблица */}
-      <TableContainer
-        sx={{ maxWidth: "1280px", margin: "0 auto" }}
-        component={Paper}
-      >
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
-          <TableHead>
-            <TableRow>
-              <TableCell>Короткая ссылка</TableCell>
-              <TableCell align="right">Исходная ссылка</TableCell>
-              <TableCell align="right">
-                Кол-во переходов по короткой ссылке
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.shortLink}>
-                <TableCell component="th" scope="row">
-                  <a rel="noreferrer" target="_blank" href={row.shortLink}>
-                    {row.shortLink}
-                  </a>
-                </TableCell>
-                <TableCell align="right">
-                  <a rel="noreferrer" target="_blank" href={row.fullLink}>
-                    {row.fullLink}
-                  </a>
-                </TableCell>
-                <TableCell align="right">{row.counter}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <LinksTable rows={rows} />
+
+      {/* страницы */}
       <Typography m={2} variant="h6" color="initial">
         Сколько отображать на странице:
       </Typography>
-      <TextField label="Кол-во строк" defaultValue={linkPerPage} />
+      <TextField
+        name="rowsCounter"
+        sx={{ margin: "16px" }}
+        type="number"
+        label="Кол-во строк"
+        defaultValue={linkPerPage}
+        onChange={handleSetLinkPerPage}
+      />
+      <Box>
+        <Button
+          onClick={() => {
+            handleChangePage(-1);
+          }}
+          sx={{ minWidth: "100px", margin: "8px" }}
+          variant="outlined"
+        >
+          Назад
+        </Button>
+        Страница: {page + 1}
+        <Button
+          onClick={() => {
+            handleChangePage(1);
+          }}
+          sx={{ minWidth: "100px", margin: "8px" }}
+          variant="outlined"
+        >
+          Вперед
+        </Button>
+      </Box>
     </>
   );
 };

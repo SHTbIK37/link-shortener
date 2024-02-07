@@ -7,11 +7,13 @@ export type TRows = {
   fullLink: string;
   counter: number;
 }[];
-export type TResponseLinks = {
+export type TResponseLink = {
   id: number;
   short: string;
   target: string;
-}[];
+  counter: number;
+};
+export type TResponseLinks = TResponseLink[];
 export type TSort =
   | "asc_short"
   | "asc_target"

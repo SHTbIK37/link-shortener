@@ -5,7 +5,7 @@ import { Typography } from "@mui/material";
 import { Button } from "@mui/material";
 import { Container } from "@mui/material";
 
-import { TSignupProps } from "./types";
+import type { TSignupProps } from "./types";
 
 const Singup: FC<TSignupProps> = (props) => {
   const [success, setSuccess] = useState<string>("-1");
