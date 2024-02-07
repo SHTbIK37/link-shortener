@@ -27,7 +27,7 @@ const Singin: FC<TSigninProps> = (props) => {
 
     if (res.ok) {
       const token = await res.json();
-      props.setToken(token);
+      props.setToken(token.access_token);
       console.log(token.access_token);
       return navigate("/");
     } else {

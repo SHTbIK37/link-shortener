@@ -10,7 +10,6 @@ import { Account } from "./containers/Account";
 
 const App: FC = () => {
   const navigate = useNavigate();
-
   const [userData, setUserData] = useState<TUser>({
     username: "",
     password: "",
@@ -18,11 +17,17 @@ const App: FC = () => {
   const [token, setToken] = useState<string>("");
   useEffect(() => {
     if (!token) navigate("/signin");
-  }, [token, navigate]);
+  }, [token]);
+
   return (
     <div className="App">
       <Routes>
-        <Route path="/" element={token && <Account />} />
+        <Route
+          path="/"
+          element={
+            token && <Account username={userData.username} token={token} />
+          }
+        />
         <Route
           path="/signin"
           element={

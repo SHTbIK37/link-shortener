@@ -1,4 +1,4 @@
-import type { FC, ChangeEvent } from "react";
+import { type FC, type ChangeEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { TextField } from "@mui/material";
 import { Typography } from "@mui/material";
@@ -8,9 +8,19 @@ import { Container } from "@mui/material";
 import { TSignupProps } from "./types";
 
 const Singup: FC<TSignupProps> = (props) => {
+  const [success, setSuccess] = useState<string>("-1");
   const navigate = useNavigate();
   // запрос регистрации
   const sendRegData = async () => {
+    // проверка полей
+    if (props.userData.username === "") {
+      setSuccess("Введите логин");
+      return 0;
+    }
+    if (props.userData.password === "") {
+      setSuccess("Введите пароль");
+      return 0;
+    }
     console.log(props.userData);
     const res = await fetch(
       `https://front-test.hex.team/api/register?username=${props.userData.username}&password=${props.userData.password}`,
@@ -24,11 +34,13 @@ const Singup: FC<TSignupProps> = (props) => {
     );
 
     if (res.ok) {
+      setSuccess("1");
       setTimeout(() => {
         return navigate("/signin");
-      }, 1500);
+      }, 1000);
     } else {
-      // доделать ошибку и успех после реги
+      const error = await res.json();
+      setSuccess(error.detail);
     }
   };
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -63,12 +75,14 @@ const Singup: FC<TSignupProps> = (props) => {
         type="password"
         variant="outlined"
       />
-      {}
+      {success !== "1" && success !== "-1" && (
+        <Typography color={"error"}>{success}</Typography>
+      )}
       <Button onClick={sendRegData} sx={{ m: "8px 0" }} variant="contained">
         зарегистрироваться
       </Button>
       <Button sx={{ textTransform: "none", m: "8px 0" }}>
-        <Link to="/">Есть аккаунт? Войти</Link>
+        <Link to="/signin">Есть аккаунт? Войти</Link>
       </Button>
     </Container>
   );
