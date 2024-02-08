@@ -26,6 +26,14 @@ const LinksTable: FC<TLinksTableProps> = (props) => {
           </TableRow>
         </TableHead>
         <TableBody>
+          {/* если нет данных */}
+          {!props.rows.length && (
+            <TableRow key="404">
+              <TableCell component="th" scope="row">
+                Нет данных
+              </TableCell>
+            </TableRow>
+          )}
           {props.rows.map((row) => (
             <TableRow key={row.shortLink}>
               <TableCell component="th" scope="row">

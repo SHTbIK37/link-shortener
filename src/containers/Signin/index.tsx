@@ -7,12 +7,13 @@ import { Button } from "@mui/material";
 import { Container } from "@mui/material";
 
 import { TSigninProps } from "./types";
+import { address } from "../../constants";
 
 const Singin: FC<TSigninProps> = (props) => {
   const navigate = useNavigate();
   // запрос токена
   const sendData = async () => {
-    const res = await fetch("https://front-test.hex.team/api/login", {
+    const res = await fetch(`${address}/api/login`, {
       method: "POST",
       headers: {
         accept: "application/json",
@@ -34,31 +35,29 @@ const Singin: FC<TSigninProps> = (props) => {
   };
   // хранение логина и пароля
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    if (event.target.id === "username")
-      props.setUserData((prevData) => ({
-        ...prevData,
-        username: event.target.value,
-      }));
-    if (event.target.id === "password")
-      props.setUserData((prevData) => ({
-        ...prevData,
-        password: event.target.value,
-      }));
+    props.setUserData((prevData) => ({
+      ...prevData,
+      [event.target.name]: event.target.value,
+    }));
   };
   return (
-    <Container maxWidth="xs" sx={{ display: "flex", flexDirection: "column" }}>
+    <Container
+      component="form"
+      maxWidth="xs"
+      sx={{ display: "flex", flexDirection: "column" }}
+    >
       <Typography variant="h4" color="initial">
         Вход
       </Typography>
       <TextField
-        id="username"
+        name="username"
         onChange={handleChange}
         sx={{ m: "8px 0" }}
         label="Логин"
         variant="outlined"
       />
       <TextField
-        id="password"
+        name="password"
         onChange={handleChange}
         sx={{ m: "8px 0" }}
         label="Пароль"
@@ -68,7 +67,12 @@ const Singin: FC<TSigninProps> = (props) => {
       {props.token === "error" && (
         <Typography color={"error"}>Неверный логин или пароль</Typography>
       )}
-      <Button onClick={sendData} sx={{ m: "8px 0" }} variant="contained">
+      <Button
+        size="large"
+        onClick={sendData}
+        sx={{ m: "8px 0" }}
+        variant="contained"
+      >
         Войти
       </Button>
       <Button sx={{ textTransform: "none", m: "8px 0" }}>

@@ -1,4 +1,11 @@
-import { type ChangeEvent, useState, type FC, useEffect, useRef } from "react";
+import {
+  type ChangeEvent,
+  useState,
+  type FC,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { Typography } from "@mui/material";
 import { TextField } from "@mui/material";
 import { Container } from "@mui/material";
@@ -17,9 +24,10 @@ import type {
   TSort,
 } from "./types";
 import { LinksTable } from "../../components/LinksTable";
+import { address } from "../../constants";
 
 const Account: FC<TAccountProps> = (props) => {
-  const prefixLink: string = "https://front-test.hex.team/s/";
+  const prefixLink: string = address + "/s/";
   const allLinks = useRef<number>(0);
   const [linkPerPage, setLinkPerPage] = useState<number>(5);
   const [page, setPage] = useState<number>(0);
@@ -34,17 +42,14 @@ const Account: FC<TAccountProps> = (props) => {
   };
   const sendLink = async () => {
     if (fullLink === "") return null;
-    const res = await fetch(
-      `https://front-test.hex.team/api/squeeze?link=${fullLink}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${props.token}`,
-          accept: "application/json",
-          "content-type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
+    const res = await fetch(`${address}/api/squeeze?link=${fullLink}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${props.token}`,
+        accept: "application/json",
+        "content-type": "application/x-www-form-urlencoded",
+      },
+    });
     if (res.ok) {
       getLinks();
     } else {
@@ -57,7 +62,7 @@ const Account: FC<TAccountProps> = (props) => {
     return { shortLink, fullLink, counter };
   };
   const [rows, setRows] = useState<TRows>([]);
-  const getLinks = async () => {
+  const getLinks = useCallback(async () => {
     const res = await fetch(
       `https://front-test.hex.team/api/statistics?order=${sort}&offset=${
         linkPerPage * page
@@ -79,10 +84,11 @@ const Account: FC<TAccountProps> = (props) => {
         })
       );
     } else alert("Данные не загружены или истек срок токена");
-  };
+  }, [linkPerPage, page, sort, props.token]);
+
   useEffect(() => {
     getLinks();
-  }, [setRows, sort, linkPerPage, page]);
+  }, [getLinks]);
   const handleSetLinkPerPage = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.value) setLinkPerPage(Number(event.target.value));
   };
@@ -147,7 +153,7 @@ const Account: FC<TAccountProps> = (props) => {
       {/* Таблица */}
       <LinksTable rows={rows} />
 
-      {/* страницы */}
+      {/* Выбор страницы */}
       <Typography m={2} variant="h6" color="initial">
         Сколько отображать на странице:
       </Typography>

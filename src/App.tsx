@@ -1,12 +1,11 @@
-import type { FC } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FC } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 
-import "./App.css";
 import { Singin } from "./containers/Signin";
 import { Singup } from "./containers/Signup";
-import type { TUser } from "./types";
 import { Account } from "./containers/Account";
+import "./App.css";
+import type { TUser } from "./types";
 
 const App: FC = () => {
   const navigate = useNavigate();
@@ -17,6 +16,7 @@ const App: FC = () => {
   const [token, setToken] = useState<string>("");
   useEffect(() => {
     if (!token) navigate("/signin");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   return (
@@ -31,14 +31,12 @@ const App: FC = () => {
         <Route
           path="/signin"
           element={
-            (!token || token === "error") && (
-              <Singin
-                token={token}
-                userData={userData}
-                setUserData={setUserData}
-                setToken={setToken}
-              />
-            )
+            <Singin
+              token={token}
+              userData={userData}
+              setUserData={setUserData}
+              setToken={setToken}
+            />
           }
         />
         <Route

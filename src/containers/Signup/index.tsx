@@ -6,6 +6,7 @@ import { Button } from "@mui/material";
 import { Container } from "@mui/material";
 
 import type { TSignupProps } from "./types";
+import { address } from "../../constants";
 
 const Singup: FC<TSignupProps> = (props) => {
   const [success, setSuccess] = useState<string>("-1");
@@ -22,7 +23,7 @@ const Singup: FC<TSignupProps> = (props) => {
       return 0;
     }
     const res = await fetch(
-      `https://front-test.hex.team/api/register?username=${props.userData.username}&password=${props.userData.password}`,
+      `${address}/api/register?username=${props.userData.username}&password=${props.userData.password}`,
       {
         method: "POST",
         headers: {
